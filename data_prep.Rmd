@@ -1,0 +1,85 @@
+---
+title: 'Data Shaping: Neural Network'
+author: "Gale, Amanda"
+date: "Fall 2025"
+output: html_document
+---
+
+
+In this document, the anemia data set will be cleaned and shaped for modeling with the random forest algorithm. This is a fairly robust algorithm that can handle messy data with some restrictions, such as the data must not have any missing values. The data would also be best without extreme outliers. However, since the data set is small,  I will 
+
+```{r}
+library(RSQLite)
+library(reticulate)
+con <- dbConnect(SQLite(), 'anemia_project_data.db')
+df <- dbGetQuery(con, 'SELECT * FROM anemia_data')
+```
+
+```{python}
+import sqlite3
+import numpy as np
+```
+
+
+```{python}
+con = sqlite3.connect('anemia_project.db')
+cur = con.cursor()
+df = cur.execute('SELECT * FROM anemia_table')
+df = df.X.drop()
+```
+
+
+### Identify Missing Values
+```{python, PD_missingVals}
+# Get missing value counts for all columns at once
+missing_counts = df.isna().sum()
+
+# Print results
+for col, count in missing_counts.items():
+    status = "no" if count == 0 else count
+    print(f"Column '{col}' has {status} missing values")
+```
+
+
+### Identify Outliers
+```{r}
+def z_score(col):
+  col_mean = np.mean(col)
+  col_stdev = np.stdev(col)
+  z_col = []
+  
+  for i in range(0:len(col)):
+    z_col[i] = (col_mean - col[i]) / col_stdev
+  
+  return(z_col)
+```
+
+```{python}
+n = n.row(df)
+col_names = df.columns()
+
+for col in df:
+  df.col = df.col(z_score)
+  outliers = []
+  for i range(0:len(n)):
+    if df.col[i] > 5 | df.col[i] < -5:
+      outliers += df.col[i]
+  s = "no"
+  if len(outliers) > 0: 
+    s = len(outliers)
+  
+  print("There are ", s, "exteme outliers present in column ", col_names[i])
+  print(outliers)
+```
+
+
+
+```{r}
+# write cleaned data to database
+df.to_sql('anemia_data', con, if_exists='replace', index=F)
+```
+
+```{python}
+con.close()
+```
+
